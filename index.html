@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FULL CIRCLE // Universe Codex</title>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;500;700&family=Special+Elite&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --text-color: #d4d4d4;
+            --accent-color: #b53932; /* Faded dystopian red */
+            --panel-color: #222222;
+            --border-color: #444444;
+            --muted-color: #888888;
+        }
+
+        [data-theme="light"] {
+            --bg-color: #e0e0d8;
+            --text-color: #1a1a1a;
+            --accent-color: #8a2b25;
+            --panel-color: #f2f2ea;
+            --border-color: #b0b0a8;
+            --muted-color: #555555;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Share Tech Mono', monospace;
+            line-height: 1.6;
+            min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Subtle grain effect for dystopian feel */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.4;
+        }
+
+        header {
+            border-bottom: 2px solid var(--text-color);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--panel-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left h1 {
+            font-family: 'Oswald', sans-serif;
+            font-weight: 700;
+            font-size: 2.5rem;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        .header-left p {
+            font-size: 0.8rem;
+            color: var(--muted-color);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        button {
+            background: transparent;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            font-family: 'Share Tech Mono', monospace;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .theme-toggle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        main {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 0;
+            height: calc(100vh - 100px);
+        }
+
+        /* Sidebar / Repo */
+        .sidebar {
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+            overflow-y: auto;
+            background: var(--panel-color);
+        }
+
+        .sidebar h2 {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .doc-list-item {
+            padding: 10px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            border-left: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .doc-list-item:hover {
+            background: var(--bg-color);
+            border-left-color: var(--accent-color);
+        }
+
+        .doc-list-item.active {
+            background: var(--bg-color);
+            border-left-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        /* Content Area */
+        .content-area {
+            padding: 40px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .view { display: none; }
+        .view.active { display: block; }
+
+        .document-view {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .document-title {
+            font-family: 'Special Elite', monospace;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 20px;
+        }
+
+        .document-meta {
+            font-size: 0.8rem;
+            color: var(--muted-color);
+            margin-bottom: 30px;
+            text-transform: uppercase;
+        }
+
+        textarea, input[type="text"] {
+            width: 100%;
+            background: var(--bg-color);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1rem;
+            resize: vertical;
+            margin-bottom: 15px;
+        }
+
+        .doc-content {
+            min-height: 300px;
+            white-space: pre-wrap;
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+
+        /* Comments */
+        .comments-section {
+            margin-top: 40px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
+        }
+
+        .comment {
+            background: var(--panel-color);
+            border-left: 2px solid var(--muted-color);
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+
+        .comment-author {
+            font-weight: bold;
+            color: var(--accent-color);
+            font-size: 0.9rem;
+        }
+
+        /* Comm-Channel */
+        .chat-box {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            margin-bottom: 15px;
+            background: var(--panel-color);
+        }
+
+        .chat-msg {
+            margin-bottom: 15px;
+        }
+
+        .doc-ref {
+            display: inline-block;
+            background: var(--bg-color);
+            border: 1px dashed var(--accent-color);
+            color: var(--accent-color);
+            padding: 2px 8px;
+            font-size: 0.8rem;
+            margin: 0 5px;
+            cursor: pointer;
+        }
+
+        .auth-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .auth-box {
+            background: var(--panel-color);
+            border: 1px solid var(--accent-color);
+            padding: 40px;
+            width: 400px;
+            text-align: center;
+        }
+
+        .hidden { display: none !important; }
+        
+        .status-tag {
+            font-size: 0.7rem;
+            background: var(--accent-color);
+            color: var(--bg-color);
+            padding: 2px 6px;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body data-theme="dark">
+
+    <header>
+        <div class="header-left">
+            <h1>Full Circle</h1>
+            <p>Universe Codex & Collaboration Hub</p>
+        </div>
+        <div class="header-right">
+            <div id="user-status">
+                <!-- User info / login button populated by JS -->
+            </div>
+            <button class="theme-toggle" onclick="toggleTheme()">◐</button>
+        </div>
+    </header>
+
+    <main>
+        <aside class="sidebar">
+            <h2>Archive Repository</h2>
+            <button onclick="openNewDocForm()" style="width: 100%; margin-bottom: 20px;">+ New Transmission</button>
+            <div id="doc-list">
+                <!-- Documents populated by JS -->
+            </div>
+            
+            <h2 style="margin-top: 40px;">Navigation</h2>
+            <div class="doc-list-item" onclick="switchView('repository')">Archives</div>
+            <div class="doc-list-item" onclick="switchView('comm-channel')">Comm-Channel</div>
+        </aside>
+
+        <section class="content-area">
+            
+            <!-- Repository / Document View -->
+            <div id="repository-view" class="view active">
+                <div id="doc-display-area" class="document-view">
+                    <h2 style="text-align: center; color: var(--muted-color); margin-top: 20%;">Select a transmission from the archive, or establish a new one.</h2>
+                </div>
+            </div>
+
+            <!-- Communication Channel View -->
+            <div id="comm-channel-view" class="view">
+                <div class="chat-box">
+                    <h2 style="font-family: 'Oswald'; margin-bottom: 20px;">Global Comm-Channel</h2>
+                    <div class="chat-messages" id="chat-messages">
+                        <!-- Messages populated by JS -->
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="chat-input" placeholder="Transmit message... (Type # to link a document)" onkeydown="if(event.key==='Enter') sendChat()">
+                        <button onclick="sendChat()">Send</button>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Auth Overlay -->
+    <div id="auth-overlay" class="auth-overlay hidden">
+        <div class="auth-box">
+            <h2 style="font-family: 'Oswald'; margin-bottom: 20px;">Access Terminal</h2>
+            <p style="margin-bottom: 20px; color: var(--muted-color);">Identification required to contribute to the Codex.</p>
+            <input type="text" id="auth-username" placeholder="Enter Callsign / Name">
+            <button onclick="createProfile()" style="width: 100%;">Authorize</button>
+            <button onclick="closeAuth()" style="margin-top: 10px; background: transparent; border: none; color: var(--muted-color);">Browse as Observer</button>
+        </div>
+    </div>
+
+    <script>
+        // --- State Management (LocalStorage) ---
+        const DB = {
+            get: (key) => JSON.parse(localStorage.getItem(`fc_${key}`)) || [],
+            set: (key, val) => localStorage.setItem(`fc_${key}`, JSON.stringify(val))
+        };
+
+        let state = {
+            currentUser: DB.get('currentUser')[0] || null,
+            docs: DB.get('docs'),
+            chat: DB.get('chat'),
+            activeDocId: null
+        };
+
+        // --- Core Render Functions ---
+        function renderAll() {
+            renderUserStatus();
+            renderDocList();
+            renderChat();
+            if (state.activeDocId) openDocument(state.activeDocId);
+        }
+
+        function renderUserStatus() {
+            const el = document.getElementById('user-status');
+            if (state.currentUser) {
+                el.innerHTML = `<span style="color: var(--accent-color);">●</span> ${state.currentUser.name} <button onclick="logout()" style="margin-left: 10px; font-size: 0.7rem; padding: 2px 8px;">Logout</button>`;
+            } else {
+                el.innerHTML = `<button onclick="showAuth()">Login to Contribute</button>`;
+            }
+        }
+
+        function renderDocList() {
+            const list = document.getElementById('doc-list');
+            if (state.docs.length === 0) {
+                list.innerHTML = `<p style="color: var(--muted-color); font-size: 0.9rem;">No archives found.</p>`;
+                return;
+            }
+            list.innerHTML = state.docs.map(doc => `
+                <div class="doc-list-item ${state.activeDocId === doc.id ? 'active' : ''}" onclick="openDocument('${doc.id}')">
+                    ${doc.title}
+                </div>
+            `).join('');
+        }
+
+        // --- Views ---
+        function switchView(view) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            if (view === 'repository') {
+                document.getElementById('repository-view').classList.add('active');
+            } else if (view === 'comm-channel') {
+                document.getElementById('comm-channel-view').classList.add('active');
+            }
+        }
+
+        // --- Documents ---
+        function openNewDocForm() {
+            if (!state.currentUser) return showAuth();
+            
+            const display = document.getElementById('doc-display-area');
+            display.innerHTML = `
+                <div class="document-view">
+                    <h2 class="document-title"><input type="text" id="new-doc-title" placeholder="ENTER TRANSMISSION TITLE"></h2>
+                    <textarea id="new-doc-content" rows="15" placeholder="Begin drafting the universe..."></textarea>
+                    <button onclick="saveNewDoc()">Publish to Archive</button>
+                    <button onclick="renderAll()" style="border-color: var(--muted-color); color: var(--muted-color);">Cancel</button>
+                </div>
+            `;
+        }
+
+        function saveNewDoc() {
+            const title = document.getElementById('new-doc-title').value;
+            const content = document.getElementById('new-doc-content').value;
+            if (!title) return alert("Title required.");
+
+            const newDoc = {
+                id: 'doc_' + Date.now(),
+                title,
+                content,
+                author: state.currentUser.name,
+                timestamp: new Date().toISOString(),
+                comments: []
+            };
+
+            state.docs.unshift(newDoc);
+            DB.set('docs', state.docs);
+            state.activeDocId = newDoc.id;
+            renderAll();
+        }
+
+        function openDocument(docId) {
+            state.activeDocId = docId;
+            const doc = state.docs.find(d => d.id === docId);
+            if (!doc) return;
+
+            const canEdit = state.currentUser && (doc.author === state.currentUser.name);
+            
+            const display = document.getElementById('doc-display-area');
+            display.innerHTML = `
+                <div class="document-view">
+                    <h2 class="document-title" id="doc-title" contenteditable="${canEdit}">${doc.title}</h2>
+                    <div class="document-meta">
+                        Authored by: ${doc.author} | ${new Date(doc.timestamp).toLocaleString()}
+                        ${canEdit ? '<span class="status-tag">EDIT MODE</span>' : ''}
+                    </div>
+                    <div class="doc-content" id="doc-content" contenteditable="${canEdit}">${doc.content}</div>
+                    ${canEdit ? `<button onclick="saveDocEdits('${doc.id}')" style="margin-top: 20px;">Save Changes</button>` : ''}
+                    
+                    <div class="comments-section">
+                        <h3 style="font-family: 'Oswald'; margin-bottom: 20px;">Addendums & Revisions</h3>
+                        <div id="comments-list">
+                            ${doc.comments.map(c => `
+                                <div class="comment">
+                                    <div class="comment-author">${c.author}</div>
+                                    <div>${c.text}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        ${state.currentUser ? `
+                            <div style="margin-top: 20px;">
+                                <textarea id="new-comment" rows="3" placeholder="Propose addition or improvement..."></textarea>
+                                <button onclick="addComment('${doc.id}')">Submit Addendum</button>
+                            </div>
+                        ` : `<p style="color: var(--muted-color); font-size: 0.9rem;">Login to submit an addendum.</p>`}
+                    </div>
+                </div>
+            `;
+            
+            // Switch to repository view if triggered from chat
+            switchView('repository');
+            renderDocList();
+        }
+
+        function saveDocEdits(docId) {
+            const doc = state.docs.find(d => d.id === docId);
+            doc.title = document.getElementById('doc-title').innerText;
+            doc.content = document.getElementById('doc-content').innerText;
+            DB.set('docs', state.docs);
+            alert("Transmission updated.");
+            renderAll();
+        }
+
+        function addComment(docId) {
+            const text = document.getElementById('new-comment').value;
+            if (!text) return;
+            
+            const doc = state.docs.find(d => d.id === docId);
+            doc.comments.push({
+                author: state.currentUser.name,
+                text: text,
+                timestamp: new Date().toISOString()
+            });
+            
+            DB.set('docs', state.docs);
+            openDocument(docId);
+        }
+
+        // --- Comm Channel ---
+        function renderChat() {
+            const box = document.getElementById('chat-messages');
+            if (state.chat.length === 0) {
+                box.innerHTML = `<p style="color: var(--muted-color);">Channel is quiet. Transmit a message.</p>`;
+                return;
+            }
+
+            box.innerHTML = state.chat.map(msg => {
+                // Parse doc references [DOC:doc_123]
+                let displayText = msg.text.replace(/\[DOC:(.*?)\]/g, (match, docId) => {
+                    const doc = state.docs.find(d => d.id === docId);
+                    const title = doc ? doc.title : "Missing Doc";
+                    return `<span class="doc-ref" onclick="openDocument('${docId}')">📄 ${title}</span>`;
+                });
+
+                return `
+                    <div class="chat-msg">
+                        <strong style="color: var(--accent-color);">${msg.author}:</strong> 
+                        ${displayText}
+                    </div>
+                `;
+            }).join('');
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function sendChat() {
+            if (!state.currentUser) return showAuth();
+            const input = document.getElementById('chat-input');
+            if (!input.value.trim()) return;
+
+            state.chat.push({
+                author: state.currentUser.name,
+                text: input.value,
+                timestamp: new Date().toISOString()
+            });
+            DB.set('chat', state.chat);
+            input.value = '';
+            renderChat();
+        }
+
+        // --- Authentication ---
+        function showAuth() {
+            document.getElementById('auth-overlay').classList.remove('hidden');
+        }
+
+        function closeAuth() {
+            document.getElementById('auth-overlay').classList.add('hidden');
+        }
+
+        function createProfile() {
+            const name = document.getElementById('auth-username').value;
+            if (!name) return alert("Callsign required.");
+            
+            const user = { name: name, joined: new Date().toISOString() };
+            state.currentUser = user;
+            DB.set('currentUser', [user]);
+            closeAuth();
+            renderAll();
+        }
+
+        function logout() {
+            state.currentUser = null;
+            localStorage.removeItem('fc_currentUser');
+            renderAll();
+        }
+
+        // --- Theme ---
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('fc_theme', newTheme);
+        }
+
+        // --- Init ---
+        (function init() {
+            const savedTheme = localStorage.getItem('fc_theme') || 'dark';
+            document.body.setAttribute('data-theme', savedTheme);
+            
+            // Seed data if empty
+            if (state.docs.length === 0) {
+                state.docs = [{
+                    id: 'doc_seed_1',
+                    title: 'The Null Protocol',
+                    content: "The universe began not with a bang, but with a system reset. The architects left behind only the geometry of the spheres and the dust of a thousand failed worlds...",
+                    author: 'System',
+                    timestamp: new Date().toISOString(),
+                    comments: [{author: 'System', text: 'Welcome to Full Circle. Edit this document or create a new one.'}]
+                }];
+                DB.set('docs', state.docs);
+            }
+            
+            renderAll();
+        })();
+    </script>
+</body>
+</html>
