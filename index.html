@@ -330,7 +330,7 @@
                         <!-- Messages populated by JS -->
                     </div>
                     <div style="display: flex; gap: 10px;">
-                        <input type="text" id="chat-input" placeholder="Transmit message... (Type # to link a document)" onkeydown="if(event.key==='Enter') sendChat()">
+                        <input type="text" id="chat-input" placeholder="Transmit message..." onkeydown="if(event.key==='Enter') sendChat()">
                         <button onclick="sendChat()">Send</button>
                     </div>
                 </div>
@@ -350,28 +350,208 @@
         </div>
     </div>
 
-    <script>
-        // --- State Management (LocalStorage) ---
-        const DB = {
-            get: (key) => JSON.parse(localStorage.getItem(`fc_${key}`)) || [],
-            set: (key, val) => localStorage.setItem(`fc_${key}`, JSON.stringify(val))
-        };
+    <script type="module">
+        // --- Firebase Initialization ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // ==========================================
+        // PASTE YOUR FIREBASE CONFIG HERE
+        // ==========================================
+        const firebaseConfig = {
+  apiKey: "AIzaSyA2KoZ8T8-l0COq9kHZdCWX3LRwP4ZtU20",
+  authDomain: "full-circle-4423c.firebaseapp.com",
+  projectId: "full-circle-4423c",
+  storageBucket: "full-circle-4423c.firebasestorage.app",
+  messagingSenderId: "705876111810",
+  appId: "1:705876111810:web:af5a67f042fb6022ada65b",
+  measurementId: "G-SG1GGP484E"
+};
+        // ==========================================
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
         let state = {
-            currentUser: DB.get('currentUser')[0] || null,
-            docs: DB.get('docs'),
-            chat: DB.get('chat'),
+            currentUser: JSON.parse(localStorage.getItem('fc_user')) || null,
+            docs: [],
+            chat: [],
             activeDocId: null
         };
 
-        // --- Core Render Functions ---
-        function renderAll() {
+        // Expose functions to global scope for HTML onclick handlers
+        window.toggleTheme = function() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('fc_theme', newTheme);
+        }
+
+        window.switchView = function(view) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(view + '-view').classList.add('active');
+            if (view === 'repository' && state.activeDocId) {
+                openDocument(state.activeDocId);
+            }
+        }
+
+        window.showAuth = function() {
+            document.getElementById('auth-overlay').classList.remove('hidden');
+        }
+
+        window.closeAuth = function() {
+            document.getElementById('auth-overlay').classList.add('hidden');
+        }
+
+        window.createProfile = function() {
+            const name = document.getElementById('auth-username').value;
+            if (!name) return alert("Callsign required.");
+            
+            const user = { name: name, joined: new Date().toISOString() };
+            state.currentUser = user;
+            localStorage.setItem('fc_user', JSON.stringify(user));
+            closeAuth();
             renderUserStatus();
-            renderDocList();
-            renderChat();
+        }
+
+        window.logout = function() {
+            state.currentUser = null;
+            localStorage.removeItem('fc_user');
+            renderUserStatus();
             if (state.activeDocId) openDocument(state.activeDocId);
         }
 
+        window.openNewDocForm = function() {
+            if (!state.currentUser) return showAuth();
+            
+            const display = document.getElementById('doc-display-area');
+            display.innerHTML = `
+                <div class="document-view">
+                    <h2 class="document-title"><input type="text" id="new-doc-title" placeholder="ENTER TRANSMISSION TITLE"></h2>
+                    <textarea id="new-doc-content" rows="15" placeholder="Begin drafting the universe..."></textarea>
+                    <button onclick="window.saveNewDoc()">Publish to Archive</button>
+                    <button onclick="window.renderAll()" style="border-color: var(--muted-color); color: var(--muted-color);">Cancel</button>
+                </div>
+            `;
+        }
+
+        window.saveNewDoc = async function() {
+            const title = document.getElementById('new-doc-title').value;
+            const content = document.getElementById('new-doc-content').value;
+            if (!title) return alert("Title required.");
+
+            try {
+                const docRef = await addDoc(collection(db, "documents"), {
+                    title,
+                    content,
+                    author: state.currentUser.name,
+                    timestamp: new Date().toISOString(),
+                    comments: []
+                });
+                state.activeDocId = docRef.id;
+                switchView('repository');
+            } catch (e) {
+                console.error("Error adding document: ", e);
+                alert("Failed to save to cloud.");
+            }
+        }
+
+        window.openDocument = function(docId) {
+            state.activeDocId = docId;
+            const doc = state.docs.find(d => d.id === docId);
+            if (!doc) return;
+
+            const canEdit = state.currentUser && (doc.author === state.currentUser.name);
+            
+            const display = document.getElementById('doc-display-area');
+            display.innerHTML = `
+                <div class="document-view">
+                    <h2 class="document-title" id="doc-title" contenteditable="${canEdit}">${doc.title}</h2>
+                    <div class="document-meta">
+                        Authored by: ${doc.author} | ${new Date(doc.timestamp).toLocaleString()}
+                        ${canEdit ? '<span class="status-tag">EDIT MODE</span>' : ''}
+                    </div>
+                    <div class="doc-content" id="doc-content" contenteditable="${canEdit}">${doc.content}</div>
+                    ${canEdit ? `<button onclick="window.saveDocEdits('${doc.id}')" style="margin-top: 20px;">Save Changes</button>` : ''}
+                    
+                    <div class="comments-section">
+                        <h3 style="font-family: 'Oswald'; margin-bottom: 20px;">Addendums & Revisions</h3>
+                        <div id="comments-list">
+                            ${(doc.comments || []).map(c => `
+                                <div class="comment">
+                                    <div class="comment-author">${c.author}</div>
+                                    <div>${c.text}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        ${state.currentUser ? `
+                            <div style="margin-top: 20px;">
+                                <textarea id="new-comment" rows="3" placeholder="Propose addition or improvement..."></textarea>
+                                <button onclick="window.addComment('${doc.id}')">Submit Addendum</button>
+                            </div>
+                        ` : `<p style="color: var(--muted-color); font-size: 0.9rem;">Login to submit an addendum.</p>`}
+                    </div>
+                </div>
+            `;
+            
+            switchView('repository');
+            renderDocList();
+        }
+
+        window.saveDocEdits = async function(docId) {
+            const docRef = doc(db, "documents", docId);
+            const title = document.getElementById('doc-title').innerText;
+            const content = document.getElementById('doc-content').innerText;
+            try {
+                await updateDoc(docRef, { title, content });
+                alert("Transmission synced to cloud.");
+            } catch (e) {
+                console.error("Error updating document: ", e);
+                alert("Failed to sync.");
+            }
+        }
+
+        window.addComment = async function(docId) {
+            const text = document.getElementById('new-comment').value;
+            if (!text) return;
+            
+            const currentDoc = state.docs.find(d => d.id === docId);
+            const newComments = currentDoc.comments || [];
+            newComments.push({
+                author: state.currentUser.name,
+                text: text,
+                timestamp: new Date().toISOString()
+            });
+
+            const docRef = doc(db, "documents", docId);
+            try {
+                await updateDoc(docRef, { comments: newComments });
+                openDocument(docId);
+            } catch (e) {
+                console.error("Error adding comment: ", e);
+            }
+        }
+
+        window.sendChat = async function() {
+            if (!state.currentUser) return showAuth();
+            const input = document.getElementById('chat-input');
+            if (!input.value.trim()) return;
+
+            try {
+                await addDoc(collection(db, "chat"), {
+                    author: state.currentUser.name,
+                    text: input.value,
+                    timestamp: new Date().toISOString()
+                });
+                input.value = '';
+            } catch (e) {
+                console.error("Error sending chat: ", e);
+            }
+        }
+
+        // --- Render Functions ---
         function renderUserStatus() {
             const el = document.getElementById('user-status');
             if (state.currentUser) {
@@ -394,120 +574,6 @@
             `).join('');
         }
 
-        // --- Views ---
-        function switchView(view) {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            if (view === 'repository') {
-                document.getElementById('repository-view').classList.add('active');
-            } else if (view === 'comm-channel') {
-                document.getElementById('comm-channel-view').classList.add('active');
-            }
-        }
-
-        // --- Documents ---
-        function openNewDocForm() {
-            if (!state.currentUser) return showAuth();
-            
-            const display = document.getElementById('doc-display-area');
-            display.innerHTML = `
-                <div class="document-view">
-                    <h2 class="document-title"><input type="text" id="new-doc-title" placeholder="ENTER TRANSMISSION TITLE"></h2>
-                    <textarea id="new-doc-content" rows="15" placeholder="Begin drafting the universe..."></textarea>
-                    <button onclick="saveNewDoc()">Publish to Archive</button>
-                    <button onclick="renderAll()" style="border-color: var(--muted-color); color: var(--muted-color);">Cancel</button>
-                </div>
-            `;
-        }
-
-        function saveNewDoc() {
-            const title = document.getElementById('new-doc-title').value;
-            const content = document.getElementById('new-doc-content').value;
-            if (!title) return alert("Title required.");
-
-            const newDoc = {
-                id: 'doc_' + Date.now(),
-                title,
-                content,
-                author: state.currentUser.name,
-                timestamp: new Date().toISOString(),
-                comments: []
-            };
-
-            state.docs.unshift(newDoc);
-            DB.set('docs', state.docs);
-            state.activeDocId = newDoc.id;
-            renderAll();
-        }
-
-        function openDocument(docId) {
-            state.activeDocId = docId;
-            const doc = state.docs.find(d => d.id === docId);
-            if (!doc) return;
-
-            const canEdit = state.currentUser && (doc.author === state.currentUser.name);
-            
-            const display = document.getElementById('doc-display-area');
-            display.innerHTML = `
-                <div class="document-view">
-                    <h2 class="document-title" id="doc-title" contenteditable="${canEdit}">${doc.title}</h2>
-                    <div class="document-meta">
-                        Authored by: ${doc.author} | ${new Date(doc.timestamp).toLocaleString()}
-                        ${canEdit ? '<span class="status-tag">EDIT MODE</span>' : ''}
-                    </div>
-                    <div class="doc-content" id="doc-content" contenteditable="${canEdit}">${doc.content}</div>
-                    ${canEdit ? `<button onclick="saveDocEdits('${doc.id}')" style="margin-top: 20px;">Save Changes</button>` : ''}
-                    
-                    <div class="comments-section">
-                        <h3 style="font-family: 'Oswald'; margin-bottom: 20px;">Addendums & Revisions</h3>
-                        <div id="comments-list">
-                            ${doc.comments.map(c => `
-                                <div class="comment">
-                                    <div class="comment-author">${c.author}</div>
-                                    <div>${c.text}</div>
-                                </div>
-                            `).join('')}
-                        </div>
-                        
-                        ${state.currentUser ? `
-                            <div style="margin-top: 20px;">
-                                <textarea id="new-comment" rows="3" placeholder="Propose addition or improvement..."></textarea>
-                                <button onclick="addComment('${doc.id}')">Submit Addendum</button>
-                            </div>
-                        ` : `<p style="color: var(--muted-color); font-size: 0.9rem;">Login to submit an addendum.</p>`}
-                    </div>
-                </div>
-            `;
-            
-            // Switch to repository view if triggered from chat
-            switchView('repository');
-            renderDocList();
-        }
-
-        function saveDocEdits(docId) {
-            const doc = state.docs.find(d => d.id === docId);
-            doc.title = document.getElementById('doc-title').innerText;
-            doc.content = document.getElementById('doc-content').innerText;
-            DB.set('docs', state.docs);
-            alert("Transmission updated.");
-            renderAll();
-        }
-
-        function addComment(docId) {
-            const text = document.getElementById('new-comment').value;
-            if (!text) return;
-            
-            const doc = state.docs.find(d => d.id === docId);
-            doc.comments.push({
-                author: state.currentUser.name,
-                text: text,
-                timestamp: new Date().toISOString()
-            });
-            
-            DB.set('docs', state.docs);
-            openDocument(docId);
-        }
-
-        // --- Comm Channel ---
         function renderChat() {
             const box = document.getElementById('chat-messages');
             if (state.chat.length === 0) {
@@ -516,7 +582,6 @@
             }
 
             box.innerHTML = state.chat.map(msg => {
-                // Parse doc references [DOC:doc_123]
                 let displayText = msg.text.replace(/\[DOC:(.*?)\]/g, (match, docId) => {
                     const doc = state.docs.find(d => d.id === docId);
                     const title = doc ? doc.title : "Missing Doc";
@@ -533,75 +598,41 @@
             box.scrollTop = box.scrollHeight;
         }
 
-        function sendChat() {
-            if (!state.currentUser) return showAuth();
-            const input = document.getElementById('chat-input');
-            if (!input.value.trim()) return;
-
-            state.chat.push({
-                author: state.currentUser.name,
-                text: input.value,
-                timestamp: new Date().toISOString()
-            });
-            DB.set('chat', state.chat);
-            input.value = '';
+        window.renderAll = function() {
+            renderUserStatus();
+            renderDocList();
             renderChat();
+            if (state.activeDocId) openDocument(state.activeDocId);
         }
 
-        // --- Authentication ---
-        function showAuth() {
-            document.getElementById('auth-overlay').classList.remove('hidden');
-        }
+        // --- Real-time Listeners ---
+        // Listen to Documents
+        onSnapshot(collection(db, "documents"), (snapshot) => {
+            state.docs = [];
+            snapshot.forEach((doc) => {
+                state.docs.push({ id: doc.id, ...doc.data() });
+            });
+            state.docs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            renderDocList();
+            if (state.activeDocId) openDocument(state.activeDocId);
+        });
 
-        function closeAuth() {
-            document.getElementById('auth-overlay').classList.add('hidden');
-        }
-
-        function createProfile() {
-            const name = document.getElementById('auth-username').value;
-            if (!name) return alert("Callsign required.");
-            
-            const user = { name: name, joined: new Date().toISOString() };
-            state.currentUser = user;
-            DB.set('currentUser', [user]);
-            closeAuth();
-            renderAll();
-        }
-
-        function logout() {
-            state.currentUser = null;
-            localStorage.removeItem('fc_currentUser');
-            renderAll();
-        }
-
-        // --- Theme ---
-        function toggleTheme() {
-            const body = document.body;
-            const currentTheme = body.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            body.setAttribute('data-theme', newTheme);
-            localStorage.setItem('fc_theme', newTheme);
-        }
+        // Listen to Chat
+        const q = query(collection(db, "chat"), orderBy("timestamp", "asc"));
+        onSnapshot(q, (snapshot) => {
+            state.chat = [];
+            snapshot.forEach((doc) => {
+                state.chat.push({ id: doc.id, ...doc.data() });
+            });
+            renderChat();
+        });
 
         // --- Init ---
         (function init() {
             const savedTheme = localStorage.getItem('fc_theme') || 'dark';
             document.body.setAttribute('data-theme', savedTheme);
-            
-            // Seed data if empty
-            if (state.docs.length === 0) {
-                state.docs = [{
-                    id: 'doc_seed_1',
-                    title: 'The Null Protocol',
-                    content: "The universe began not with a bang, but with a system reset. The architects left behind only the geometry of the spheres and the dust of a thousand failed worlds...",
-                    author: 'System',
-                    timestamp: new Date().toISOString(),
-                    comments: [{author: 'System', text: 'Welcome to Full Circle. Edit this document or create a new one.'}]
-                }];
-                DB.set('docs', state.docs);
-            }
-            
-            renderAll();
+            renderUserStatus();
+            renderChat();
         })();
     </script>
 </body>
