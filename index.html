@@ -2,15 +2,22 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>FULL CIRCLE // Universal Archives</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#0a0a0a">
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
     <link href="https://fonts.googleapis.com/css2?family=Saira+Stencil+One&family=Oswald:wght@300;500;700&family=Special+Elite&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Dark Mode: Wolfenstein / Star Wars Imperial Terminal */
             --bg-color: #0a0a0a;
             --text-color: #e0e0e0;
-            --accent-color: #cc0000; /* Dystopian Red */
+            --accent-color: #cc0000;
             --panel-color: #141414;
             --border-color: #333333;
             --muted-color: #666666;
@@ -18,7 +25,6 @@
         }
 
         [data-theme="light"] {
-            /* Light Mode: Aged Dystopian Broadsheet */
             --bg-color: #dcdcd0;
             --text-color: #1a1a1a;
             --accent-color: #8a2b25;
@@ -28,7 +34,7 @@
             --card-bg: #f2f2ea;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
         body {
             background-color: var(--bg-color);
@@ -37,142 +43,94 @@
             line-height: 1.6;
             min-height: 100vh;
             transition: background-color 0.3s, color 0.3s;
-            border: 10px solid var(--bg-color); /* Brutalist frame */
+            border: 10px solid var(--bg-color);
         }
 
-        /* Heavy grain effect */
         body::before {
             content: ""; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
             pointer-events: none; z-index: 9999; opacity: 0.5;
         }
 
-        /* Masthead */
         header {
             border-bottom: 4px solid var(--text-color);
             border-top: 4px solid var(--text-color);
-            padding: 20px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--panel-color);
+            padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; background: var(--panel-color);
         }
-
-        .header-left h1 {
-            font-family: 'Saira Stencil One', sans-serif;
-            font-size: 3.5rem;
-            letter-spacing: 6px;
-            text-transform: uppercase;
-            line-height: 1;
-        }
-
-        .header-left p {
-            font-size: 0.8rem;
-            color: var(--muted-color);
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            margin-top: 5px;
-            border-left: 2px solid var(--accent-color);
-            padding-left: 10px;
-        }
-
+        .header-left h1 { font-family: 'Saira Stencil One', sans-serif; font-size: 3.5rem; letter-spacing: 6px; text-transform: uppercase; line-height: 1; }
+        .header-left p { font-size: 0.8rem; color: var(--muted-color); letter-spacing: 4px; text-transform: uppercase; margin-top: 5px; border-left: 2px solid var(--accent-color); padding-left: 10px; }
         .header-right { display: flex; align-items: center; gap: 20px; }
 
-        button {
-            background: transparent; color: var(--text-color); border: 1px solid var(--border-color);
-            padding: 10px 20px; font-family: 'Share Tech Mono', monospace; cursor: pointer;
-            text-transform: uppercase; font-size: 0.85rem; transition: all 0.2s;
-            font-weight: bold;
-        }
+        button { background: transparent; color: var(--text-color); border: 1px solid var(--border-color); padding: 10px 20px; font-family: 'Share Tech Mono', monospace; cursor: pointer; text-transform: uppercase; font-size: 0.85rem; transition: all 0.2s; font-weight: bold; }
         button:hover { background: var(--text-color); color: var(--bg-color); border-color: var(--text-color); }
-        
-        .theme-toggle {
-            width: 40px; height: 40px; border-radius: 0; font-size: 1.2rem; padding: 0;
-            display: flex; align-items: center; justify-content: center;
-        }
+        .theme-toggle { width: 40px; height: 40px; border-radius: 0; font-size: 1.2rem; padding: 0; display: flex; align-items: center; justify-content: center; }
 
         main { display: grid; grid-template-columns: 300px 1fr; gap: 0; height: calc(100vh - 140px); }
-
-        .sidebar {
-            border-right: 2px solid var(--border-color); padding: 30px 20px; overflow-y: auto;
-            background: var(--panel-color); 
-        }
-        .sidebar h2 {
-            font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 1.2rem; margin-bottom: 15px;
-            border-bottom: 1px solid var(--border-color); padding-bottom: 10px; text-transform: uppercase; letter-spacing: 2px;
-        }
-        .nav-item {
-            padding: 12px; margin-bottom: 5px; cursor: pointer; border-left: 4px solid transparent;
-            transition: all 0.2s; text-transform: uppercase; font-size: 0.9rem; font-weight: 300;
-        }
-        .nav-item:hover { background: var(--bg-color); border-left-color: var(--muted-color); }
-        .nav-item.active { background: var(--bg-color); border-left-color: var(--accent-color); color: var(--accent-color); font-weight: 700; }
+        .sidebar { border-right: 2px solid var(--border-color); padding: 30px 20px; overflow-y: auto; background: var(--panel-color); }
+        .sidebar h2 { font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 1.2rem; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; text-transform: uppercase; letter-spacing: 2px; }
+        .nav-item { padding: 12px; margin-bottom: 5px; cursor: pointer; border-left: 4px solid transparent; transition: all 0.2s; text-transform: uppercase; font-size: 0.9rem; font-weight: 300; }
+        .nav-item:hover, .nav-item.active { background: var(--bg-color); border-left-color: var(--accent-color); color: var(--accent-color); font-weight: 700; }
 
         .content-area { padding: 40px; overflow-y: auto; position: relative; }
         .view { display: none; }
         .view.active { display: block; }
 
-        /* Document Grid (Classified Dossiers) */
         .doc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; max-width: 1400px; margin: 0 auto; }
-        .doc-card {
-            border: 1px solid var(--border-color); padding: 20px; cursor: pointer; background: var(--card-bg);
-            display: flex; flex-direction: column; position: relative; overflow: hidden;
-            box-shadow: 4px 4px 0px var(--bg-color); transition: transform 0.1s, box-shadow 0.1s;
-        }
-        .doc-card:hover { border-color: var(--text-color); transform: translate(-2px, -2px); box-shadow: 6px 6px 0px var(--accent-color); }
-        .doc-card::before {
-            content: "FILE"; position: absolute; top: 0; right: 0; background: var(--muted-color); color: var(--bg-color);
-            font-size: 0.6rem; padding: 2px 8px; letter-spacing: 1px;
-        }
+        .doc-card { border: 1px solid var(--border-color); padding: 20px; cursor: pointer; background: var(--card-bg); display: flex; flex-direction: column; position: relative; overflow: hidden; box-shadow: 4px 4px 0px var(--bg-color); transition: transform 0.1s, box-shadow 0.1s; }
+        .doc-card:hover, .doc-card:active { border-color: var(--text-color); transform: translate(-2px, -2px); box-shadow: 6px 6px 0px var(--accent-color); }
+        .doc-card::before { content: "FILE"; position: absolute; top: 0; right: 0; background: var(--muted-color); color: var(--bg-color); font-size: 0.6rem; padding: 2px 8px; letter-spacing: 1px; }
         .doc-card h3 { font-family: 'Oswald', sans-serif; font-weight: 500; font-size: 1.5rem; margin-bottom: 10px; text-transform: uppercase; }
         .doc-card-snippet { color: var(--muted-color); font-size: 0.9rem; flex-grow: 1; margin-bottom: 15px; line-height: 1.4; }
         .doc-card-meta { font-size: 0.75rem; color: var(--muted-color); border-top: 1px dashed var(--border-color); padding-top: 10px; display: flex; justify-content: space-between; }
 
-        /* Category Colors (Terminal Readouts) */
         .category-tag { font-size: 0.7rem; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; display: inline-block; padding: 4px 8px; background: var(--bg-color); }
-        .cat-Lore { color: #00ff41; border: 1px solid #00ff41; } /* Matrix Green */
-        .cat-Characters { color: #ffcc00; border: 1px solid #ffcc00; } /* Amber Warning */
-        .cat-Locations { color: #0080ff; border: 1px solid #0080ff; } /* Blueprint Blue */
-        .cat-Events { color: #ff3333; border: 1px solid #ff3333; } /* Alarm Red */
-        .cat-Technology { color: #ff00ff; border: 1px solid #ff00ff; } /* Exotic Magenta */
+        .cat-Lore { color: #00ff41; border: 1px solid #00ff41; }
+        .cat-Characters { color: #ffcc00; border: 1px solid #ffcc00; }
+        .cat-Locations { color: #0080ff; border: 1px solid #0080ff; }
+        .cat-Events { color: #ff3333; border: 1px solid #ff3333; }
+        .cat-Technology { color: #ff00ff; border: 1px solid #ff00ff; }
         .cat-Misc { color: #ffffff; border: 1px solid #ffffff; }
 
         .document-view { max-width: 800px; margin: 0 auto; }
-        .document-title {
-            font-family: 'Special Elite', monospace; font-size: 2.5rem; margin-bottom: 10px;
-            border-bottom: 2px solid var(--text-color); padding-bottom: 20px; line-height: 1.1;
-        }
+        .document-title { font-family: 'Special Elite', monospace; font-size: 2.5rem; margin-bottom: 10px; border-bottom: 2px solid var(--text-color); padding-bottom: 20px; line-height: 1.1; }
         .document-meta { font-size: 0.8rem; color: var(--muted-color); margin-bottom: 30px; text-transform: uppercase; border-left: 3px solid var(--accent-color); padding-left: 10px; }
         
-        textarea, input[type="text"], input[type="password"], select {
-            width: 100%; background: var(--bg-color); color: var(--text-color); border: 2px solid var(--border-color);
-            padding: 15px; font-family: 'Share Tech Mono', monospace; font-size: 1rem; resize: vertical; margin-bottom: 15px;
-        }
-        select { text-transform: uppercase; }
-
-        .doc-content {
-            min-height: 300px; white-space: pre-wrap; font-size: 1.1rem; line-height: 1.8; padding: 25px;
-            border: 1px solid var(--border-color); background: var(--card-bg); font-family: 'Special Elite', monospace;
-        }
+        textarea, input[type="text"], input[type="password"], select { width: 100%; background: var(--bg-color); color: var(--text-color); border: 2px solid var(--border-color); padding: 15px; font-family: 'Share Tech Mono', monospace; font-size: 1rem; resize: vertical; margin-bottom: 15px; }
+        .doc-content { min-height: 300px; white-space: pre-wrap; font-size: 1.1rem; line-height: 1.8; padding: 25px; border: 1px solid var(--border-color); background: var(--card-bg); font-family: 'Special Elite', monospace; }
 
         .comments-section { margin-top: 40px; border-top: 2px solid var(--border-color); padding-top: 20px; }
         .comment { background: var(--panel-color); border-left: 4px solid var(--muted-color); padding: 15px; margin-bottom: 10px; }
         .comment-author { font-weight: bold; color: var(--accent-color); font-size: 0.9rem; text-transform: uppercase; }
 
-        /* Chat (Comm-Channel) */
         .chat-box { max-width: 800px; margin: 0 auto; display: flex; flex-direction: column; height: 100%; }
         .chat-messages { flex-grow: 1; overflow-y: auto; border: 2px solid var(--border-color); padding: 20px; margin-bottom: 15px; background: var(--card-bg); }
         .chat-msg { margin-bottom: 20px; border-bottom: 1px dashed var(--border-color); padding-bottom: 10px; }
         .doc-ref { display: inline-block; background: var(--bg-color); border: 1px solid var(--accent-color); color: var(--accent-color); padding: 2px 8px; font-size: 0.8rem; margin: 0 5px; cursor: pointer; font-weight: bold; }
 
         .auth-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.95); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-        .auth-box { background: var(--bg-color); border: 4px solid var(--text-color); padding: 40px; width: 450px; text-align: center; box-shadow: 10px 10px 0px var(--accent-color); }
+        .auth-box { background: var(--bg-color); border: 4px solid var(--text-color); padding: 40px; width: 90%; max-width: 450px; text-align: center; box-shadow: 10px 10px 0px var(--accent-color); }
         .auth-tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid var(--border-color); }
         .auth-tab { flex: 1; padding: 10px; cursor: pointer; background: transparent; border: none; color: var(--muted-color); font-weight: bold; font-size: 1rem; }
         .auth-tab.active { color: var(--text-color); border-bottom: 4px solid var(--accent-color); margin-bottom: -2px; }
 
         .hidden { display: none !important; }
         .status-tag { font-size: 0.7rem; background: var(--accent-color); color: var(--bg-color); padding: 2px 6px; margin-left: 10px; vertical-align: middle; }
+
+        /* Mobile App Layout */
+        @media (max-width: 768px) {
+            main { grid-template-columns: 1fr; height: auto; min-height: calc(100vh - 120px); }
+            .sidebar { border-right: none; border-bottom: 2px solid var(--border-color); display: flex; flex-wrap: wrap; gap: 10px; padding: 15px; overflow: visible; }
+            .sidebar h2 { width: 100%; margin-top: 10px; }
+            .sidebar button { width: auto; flex-grow: 1; }
+            .nav-item { display: inline-block; margin-right: 5px; margin-bottom: 0; border-left: none; border-bottom: 4px solid transparent; }
+            .nav-item.active { border-left: none; border-bottom-color: var(--accent-color); }
+            .content-area { padding: 20px; }
+            header { padding: 15px 20px; }
+            .header-left h1 { font-size: 2rem; letter-spacing: 2px; }
+            .header-left p { display: none; }
+            .doc-grid { grid-template-columns: 1fr; }
+            .document-title { font-size: 2rem; }
+        }
     </style>
 </head>
 <body data-theme="dark">
@@ -191,13 +149,13 @@
     <main>
         <aside class="sidebar">
             <h2>Terminal Access</h2>
-            <button onclick="openNewDocForm()" style="width: 100%; margin-bottom: 20px;">+ Log New Entry</button>
+            <button onclick="openNewDocForm()">+ Log New Entry</button>
             
-            <div class="nav-item active" id="nav-all" onclick="filterDocs('all')">Global Archive</div>
-            <div class="nav-item" id="nav-mine" onclick="filterDocs('mine')">My Personal Archive</div>
+            <div class="nav-item active" id="nav-all" onclick="filterDocs('all')">Global</div>
+            <div class="nav-item" id="nav-mine" onclick="filterDocs('mine')">Personal</div>
             
-            <h2 style="margin-top: 40px;">Network</h2>
-            <div class="nav-item" id="nav-repo" onclick="switchView('repository')">View Documents</div>
+            <h2>Network</h2>
+            <div class="nav-item" id="nav-repo" onclick="switchView('repository')">View Docs</div>
             <div class="nav-item" id="nav-chat" onclick="switchView('comm-channel')">Comm-Channel</div>
         </aside>
 
@@ -255,11 +213,7 @@
 
         let state = {
             currentUser: JSON.parse(localStorage.getItem('fc_user')) || null,
-            docs: [],
-            chat: [],
-            activeDocId: null,
-            viewMode: 'all',
-            authMode: 'login'
+            docs: [], chat: [], activeDocId: null, viewMode: 'all', authMode: 'login'
         };
 
         window.toggleTheme = function() {
@@ -273,7 +227,6 @@
         window.switchView = function(view) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById(view + '-view').classList.add('active');
-            
             document.querySelectorAll('.sidebar .nav-item').forEach(n => n.classList.remove('active'));
             if (view === 'repository') {
                 document.getElementById('nav-repo').classList.add('active');
@@ -285,13 +238,7 @@
             }
         }
 
-        window.filterDocs = function(mode) {
-            state.viewMode = mode;
-            state.activeDocId = null;
-            switchView('repository');
-        }
-
-        // --- Auth Logic ---
+        window.filterDocs = function(mode) { state.viewMode = mode; state.activeDocId = null; switchView('repository'); }
         window.showAuth = function() { document.getElementById('auth-overlay').classList.remove('hidden'); }
         window.closeAuth = function() { document.getElementById('auth-overlay').classList.add('hidden'); }
         
@@ -299,15 +246,12 @@
             state.authMode = mode;
             const passInput = document.getElementById('auth-password');
             const submitBtn = document.getElementById('auth-submit-btn');
-            
             if (mode === 'register') {
-                passInput.style.display = 'block';
-                submitBtn.innerText = 'Register';
+                passInput.style.display = 'block'; submitBtn.innerText = 'Register';
                 document.getElementById('tab-login').classList.remove('active');
                 document.getElementById('tab-register').classList.add('active');
             } else {
-                passInput.style.display = 'none';
-                submitBtn.innerText = 'Sign In';
+                passInput.style.display = 'none'; submitBtn.innerText = 'Sign In';
                 document.getElementById('tab-login').classList.add('active');
                 document.getElementById('tab-register').classList.remove('active');
             }
@@ -316,58 +260,40 @@
         window.handleAuth = async function() {
             const name = document.getElementById('auth-username').value;
             if (!name) return alert("Callsign required.");
-
             if (state.authMode === 'register') {
                 const pass = document.getElementById('auth-password').value;
                 if (!pass) return alert("Passcode required.");
-                
                 const q = query(collection(db, "users"), where("name", "==", name));
                 const snapshot = await getDocs(q);
                 if (!snapshot.empty) return alert("Callsign already taken.");
-
                 await addDoc(collection(db, "users"), { name, password: pass });
                 state.currentUser = { name };
                 localStorage.setItem('fc_user', JSON.stringify(state.currentUser));
-                closeAuth();
-                renderUserStatus();
-                renderHomepage();
+                closeAuth(); renderUserStatus(); renderHomepage();
             } else {
                 state.currentUser = { name };
                 localStorage.setItem('fc_user', JSON.stringify(state.currentUser));
-                closeAuth();
-                renderUserStatus();
-                renderHomepage();
+                closeAuth(); renderUserStatus(); renderHomepage();
             }
         }
 
-        window.logout = function() {
-            state.currentUser = null;
-            localStorage.removeItem('fc_user');
-            renderUserStatus();
-            renderHomepage();
-        }
+        window.logout = function() { state.currentUser = null; localStorage.removeItem('fc_user'); renderUserStatus(); renderHomepage(); }
 
-        // --- Documents ---
         window.openNewDocForm = function() {
             if (!state.currentUser) return showAuth();
-            
             const display = document.getElementById('doc-display-area');
             display.innerHTML = `
                 <div class="document-view">
                     <h2 class="document-title"><input type="text" id="new-doc-title" placeholder="ENTER FILE TITLE"></h2>
                     <select id="new-doc-category">
-                        <option value="Misc">Misc</option>
-                        <option value="Lore">Lore</option>
-                        <option value="Characters">Characters</option>
-                        <option value="Locations">Locations</option>
-                        <option value="Events">Events</option>
-                        <option value="Technology">Technology</option>
+                        <option value="Misc">Misc</option><option value="Lore">Lore</option>
+                        <option value="Characters">Characters</option><option value="Locations">Locations</option>
+                        <option value="Events">Events</option><option value="Technology">Technology</option>
                     </select>
                     <textarea id="new-doc-content" rows="15" placeholder="Begin drafting the universe..."></textarea>
                     <button onclick="window.saveNewDoc()">Commit to Archive</button>
                     <button onclick="window.renderHomepage()" style="border-color: var(--muted-color); color: var(--muted-color);">Discard</button>
-                </div>
-            `;
+                </div>`;
         }
 
         window.saveNewDoc = async function() {
@@ -375,70 +301,40 @@
             const content = document.getElementById('new-doc-content').value;
             const category = document.getElementById('new-doc-category').value;
             if (!title) return alert("Title required.");
-
             try {
-                await addDoc(collection(db, "documents"), {
-                    title, content, category,
-                    author: state.currentUser.name,
-                    timestamp: new Date().toISOString(),
-                    comments: []
-                });
-                state.activeDocId = null;
-                renderHomepage();
-            } catch (e) {
-                console.error("Error adding document: ", e);
-            }
+                await addDoc(collection(db, "documents"), { title, content, category, author: state.currentUser.name, timestamp: new Date().toISOString(), comments: [] });
+                state.activeDocId = null; renderHomepage();
+            } catch (e) { console.error(e); }
         }
 
         window.openDocument = function(docId) {
             state.activeDocId = docId;
             const doc = state.docs.find(d => d.id === docId);
             if (!doc) return;
-
             const canEdit = state.currentUser && (doc.author === state.currentUser.name);
-            
-            const display = document.getElementById('doc-display-area');
-            display.innerHTML = `
+            document.getElementById('doc-display-area').innerHTML = `
                 <div class="document-view">
                     <div class="category-tag cat-${doc.category}">${doc.category}</div>
                     <h2 class="document-title" id="doc-title" contenteditable="${canEdit}">${doc.title}</h2>
-                    <div class="document-meta">
-                        Authored by: ${doc.author} | ${new Date(doc.timestamp).toLocaleString()}
-                        ${canEdit ? '<span class="status-tag">EDIT MODE</span>' : ''}
-                    </div>
+                    <div class="document-meta">Authored by: ${doc.author} | ${new Date(doc.timestamp).toLocaleString()} ${canEdit ? '<span class="status-tag">EDIT MODE</span>' : ''}</div>
                     <div class="doc-content" id="doc-content" contenteditable="${canEdit}">${doc.content}</div>
                     <div style="margin-top: 20px;">
                         ${canEdit ? `<button onclick="window.saveDocEdits('${doc.id}')">Sync Changes</button>` : ''}
                         <button onclick="window.renderHomepage()" style="border-color: var(--muted-color); color: var(--muted-color);">Back to Archive</button>
                     </div>
-                    
                     <div class="comments-section">
                         <h3 style="font-family: 'Oswald'; margin-bottom: 20px; text-transform: uppercase;">// Addendums & Revisions</h3>
-                        <div id="comments-list">
-                            ${(doc.comments || []).map(c => `
-                                <div class="comment">
-                                    <div class="comment-author">${c.author}</div>
-                                    <div>${c.text}</div>
-                                </div>
-                            `).join('')}
-                        </div>
-                        ${state.currentUser ? `
-                            <div style="margin-top: 20px;">
-                                <textarea id="new-comment" rows="3" placeholder="Propose addition or improvement..."></textarea>
-                                <button onclick="window.addComment('${doc.id}')">Submit Addendum</button>
-                            </div>
-                        ` : `<p style="color: var(--muted-color); font-size: 0.9rem;">Sign in to submit an addendum.</p>`}
+                        <div id="comments-list">${(doc.comments || []).map(c => `<div class="comment"><div class="comment-author">${c.author}</div><div>${c.text}</div></div>`).join('')}</div>
+                        ${state.currentUser ? `<div style="margin-top: 20px;"><textarea id="new-comment" rows="3" placeholder="Propose addition or improvement..."></textarea><button onclick="window.addComment('${doc.id}')">Submit Addendum</button></div>` : `<p style="color: var(--muted-color); font-size: 0.9rem;">Sign in to submit an addendum.</p>`}
                     </div>
-                </div>
-            `;
+                </div>`;
         }
 
         window.saveDocEdits = async function(docId) {
             const docRef = doc(db, "documents", docId);
             const title = document.getElementById('doc-title').innerText;
             const content = document.getElementById('doc-content').innerText;
-            try { await updateDoc(docRef, { title, content }); alert("Synced to cloud."); } 
-            catch (e) { console.error(e); }
+            try { await updateDoc(docRef, { title, content }); alert("Synced to cloud."); } catch (e) { console.error(e); }
         }
 
         window.addComment = async function(docId) {
@@ -447,107 +343,71 @@
             const currentDoc = state.docs.find(d => d.id === docId);
             const newComments = currentDoc.comments || [];
             newComments.push({ author: state.currentUser.name, text, timestamp: new Date().toISOString() });
-            try { await updateDoc(doc(db, "documents", docId), { comments: newComments }); } 
-            catch (e) { console.error(e); }
+            try { await updateDoc(doc(db, "documents", docId), { comments: newComments }); } catch (e) { console.error(e); }
         }
 
-        // --- Chat ---
         window.sendChat = async function() {
             if (!state.currentUser) return showAuth();
             const input = document.getElementById('chat-input');
             if (!input.value.trim()) return;
-            try {
-                await addDoc(collection(db, "chat"), { author: state.currentUser.name, text: input.value, timestamp: new Date().toISOString() });
-                input.value = '';
-            } catch (e) { console.error(e); }
+            try { await addDoc(collection(db, "chat"), { author: state.currentUser.name, text: input.value, timestamp: new Date().toISOString() }); input.value = ''; } catch (e) { console.error(e); }
         }
 
-        // --- Rendering ---
         function renderUserStatus() {
             const el = document.getElementById('user-status');
-            if (state.currentUser) {
-                el.innerHTML = `<span style="color: var(--accent-color);">●</span> ${state.currentUser.name.toUpperCase()} <button onclick="logout()" style="margin-left: 10px; font-size: 0.7rem; padding: 2px 8px;">Logout</button>`;
-            } else {
-                el.innerHTML = `<button onclick="showAuth()">Sign In</button>`;
-            }
+            if (state.currentUser) el.innerHTML = `<span style="color: var(--accent-color);">●</span> ${state.currentUser.name.toUpperCase()} <button onclick="logout()" style="margin-left: 10px; font-size: 0.7rem; padding: 2px 8px;">Logout</button>`;
+            else el.innerHTML = `<button onclick="showAuth()">Sign In</button>`;
         }
 
         window.renderHomepage = function() {
             const display = document.getElementById('doc-display-area');
             state.activeDocId = null;
-            
             let docsToShow = state.docs;
             if (state.viewMode === 'mine') {
-                if (!state.currentUser) {
-                    display.innerHTML = `<h2 style="text-align: center; color: var(--muted-color); margin-top: 20%;">ACCESS DENIED: SIGN IN REQUIRED FOR PERSONAL ARCHIVE.</h2>`;
-                    return;
-                }
+                if (!state.currentUser) { display.innerHTML = `<h2 style="text-align: center; color: var(--muted-color); margin-top: 20%;">ACCESS DENIED: SIGN IN REQUIRED.</h2>`; return; }
                 docsToShow = state.docs.filter(d => d.author === state.currentUser.name);
             }
-
-            if (docsToShow.length === 0) {
-                display.innerHTML = `<h2 style="text-align: center; color: var(--muted-color); margin-top: 20%;">NO TRANSMISSIONS FOUND IN THIS ARCHIVE.</h2>`;
-                return;
-            }
-
-            display.innerHTML = `
-                <div class="doc-grid">
-                    ${docsToShow.map(doc => `
-                        <div class="doc-card" onclick="openDocument('${doc.id}')">
-                            <div class="category-tag cat-${doc.category}">${doc.category}</div>
-                            <h3>${doc.title}</h3>
-                            <div class="doc-card-snippet">${doc.content.substring(0, 100)}...</div>
-                            <div class="doc-card-meta">
-                                <span>By ${doc.author}</span>
-                                <span>#${doc.id.substring(0,6).toUpperCase()}</span>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
+            if (docsToShow.length === 0) { display.innerHTML = `<h2 style="text-align: center; color: var(--muted-color); margin-top: 20%;">NO TRANSMISSIONS FOUND.</h2>`; return; }
+            display.innerHTML = `<div class="doc-grid">${docsToShow.map(doc => `<div class="doc-card" onclick="openDocument('${doc.id}')"><div class="category-tag cat-${doc.category}">${doc.category}</div><h3>${doc.title}</h3><div class="doc-card-snippet">${doc.content.substring(0, 100)}...</div><div class="doc-card-meta"><span>By ${doc.author}</span><span>#${doc.id.substring(0,6).toUpperCase()}</span></div></div>`).join('')}</div>`;
         }
 
         function renderChat() {
             const box = document.getElementById('chat-messages');
-            if (state.chat.length === 0) {
-                box.innerHTML = `<p style="color: var(--muted-color);">// CHANNEL IS QUIET. TRANSMIT A MESSAGE.</p>`;
-                return;
-            }
+            if (state.chat.length === 0) { box.innerHTML = `<p style="color: var(--muted-color);">// CHANNEL IS QUIET.</p>`; return; }
             box.innerHTML = state.chat.map(msg => {
                 let displayText = msg.text.replace(/\[DOC:(.*?)\]/g, (match, docId) => {
                     const doc = state.docs.find(d => d.id === docId);
-                    const title = doc ? doc.title : "Missing File";
-                    return `<span class="doc-ref" onclick="openDocument('${docId}')">📄 ${title}</span>`;
+                    return `<span class="doc-ref" onclick="openDocument('${docId}')">📄 ${doc ? doc.title : "Missing File"}</span>`;
                 });
                 return `<div class="chat-msg"><strong style="color: var(--accent-color);">${msg.author.toUpperCase()}:</strong> ${displayText}</div>`;
             }).join('');
             box.scrollTop = box.scrollHeight;
         }
 
-        // --- Real-time Listeners ---
         onSnapshot(collection(db, "documents"), (snapshot) => {
             state.docs = [];
             snapshot.forEach((d) => { state.docs.push({ id: d.id, ...d.data() }); });
             state.docs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            if (document.getElementById('repository-view').classList.contains('active')) {
-                renderHomepage();
-            }
+            if (document.getElementById('repository-view').classList.contains('active')) renderHomepage();
         });
 
         const q = query(collection(db, "chat"), orderBy("timestamp", "asc"));
-        onSnapshot(q, (snapshot) => {
-            state.chat = [];
-            snapshot.forEach((d) => { state.chat.push({ id: d.id, ...d.data() }); });
-            renderChat();
-        });
+        onSnapshot(q, (snapshot) => { state.chat = []; snapshot.forEach((d) => { state.chat.push({ id: d.id, ...d.data() }); }); renderChat(); });
 
-        // --- Init ---
         (function init() {
             const savedTheme = localStorage.getItem('fc_theme') || 'dark';
             document.body.setAttribute('data-theme', savedTheme);
-            renderUserStatus();
-            renderChat();
+            renderUserStatus(); renderChat();
         })();
+    </script>
+    
+    <!-- Register Service Worker for App capabilities -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').then(reg => console.log('SW registered:', reg)).catch(err => console.error('SW reg failed:', err));
+            });
+        }
     </script>
 </body>
 </html>
